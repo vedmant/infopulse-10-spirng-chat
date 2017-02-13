@@ -13,30 +13,33 @@
             ${sessionScope.alreadyExists}
 
             <sf:form modelAttribute="user" action="${formHandler}" cssClass="form-horizontal">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Registration</div>
+                    <div class="panel-body">
 
-                <div class="form-group">
-                    <label for="login" class="col-sm-3 control-label"><s:message code="auth.login"></s:message></label>
-                    <div class="col-sm-9">
-                        <sf:input path="login" cssClass="form-control"/>
+                        <div class="form-group">
+                            <label for="login" class="col-sm-3 control-label"><s:message code="auth.login"></s:message></label>
+                            <div class="col-sm-9">
+                                <sf:input path="login" cssClass="form-control"/>
+                            </div>
+                            <sf:errors path="login" cssClass="error"/>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login" class="col-sm-3 control-label"><s:message code="auth.password"></s:message></label>
+                            <div class="col-sm-9">
+                                <sf:password path="password" cssClass="form-control" />
+                            </div>
+                            <sf:errors path="password" cssClass="error"/>
+                        </div>
+
                     </div>
-                    <sf:errors path="login" cssClass="error"/>
-                </div>
 
-                <div class="form-group">
-                    <label for="login" class="col-sm-3 control-label"><s:message code="auth.password"></s:message></label>
-                    <div class="col-sm-9">
-                        <sf:password path="password" cssClass="form-control" />
-                    </div>
-                    <sf:errors path="password" cssClass="error"/>
-                </div>
-
-                <div class="form-group">
-                    <label class="col-sm-3 control-label"></label>
-                    <div class="col-sm-9">
+                    <div class="panel-footer text-center">
                         <button type="submit" class="btn btn-primary"><s:message code="auth.submit"/></button>
                     </div>
-                </div>
 
+                </div>
             </sf:form>
 
         </div>
