@@ -36,12 +36,9 @@ public class RegisterController {
     public ModelAndView postRegister(@ModelAttribute("user") @Validated UserDTO user,
                                      HttpSession session) {
         ModelAndView modelAndView = new ModelAndView();
-        if (registrationService.createUser(user)) {
-            modelAndView.setViewName("login");
-        } else {
-            modelAndView.addObject("alreadyExists", "User login already exists");
-            modelAndView.setViewName("register");
-        }
+        registrationService.createUser(user);
+
+        modelAndView.setViewName("login");
 
         return modelAndView;
     }

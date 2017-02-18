@@ -10,8 +10,6 @@
     <div class="row">
         <div class="col-sm-6 col-sm-push-3">
 
-            ${sessionScope.alreadyExists}
-
             <sf:form modelAttribute="user" action="${formHandler}" cssClass="form-horizontal">
                 <div class="panel panel-primary">
                     <div class="panel-heading">Login</div>

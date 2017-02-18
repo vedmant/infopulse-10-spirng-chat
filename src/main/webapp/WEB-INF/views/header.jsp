@@ -40,3 +40,8 @@
     </div>
 </nav>
 
+<c:if test="${sessionScope.error != null}">
+<div class="container">
+    <p class="alert alert-danger">${sessionScope.error}</p>
+</div>
+</c:if>
