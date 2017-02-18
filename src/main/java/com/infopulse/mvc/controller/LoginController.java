@@ -1,12 +1,17 @@
 package com.infopulse.mvc.controller;
 
+import com.infopulse.mvc.domain.Role;
 import com.infopulse.mvc.domain.User;
+import com.infopulse.mvc.dto.UserDTO;
+import com.infopulse.mvc.service.LoginService;
+import com.infopulse.mvc.service.RegistrationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpSession;
 
 /**
  * Created by vedmant on 2/4/17.
@@ -14,8 +19,11 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 public class LoginController {
 
+    @Autowired
+    LoginService loginService;
+
     @RequestMapping(value = "/login", method = RequestMethod.GET, name = "getLogin")
-    public ModelAndView getLogin(@ModelAttribute("user") @Validated User user) {
+    public ModelAndView getLogin(@ModelAttribute("user") @Validated UserDTO user) {
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.addObject("formHandler", "/login");
         modelAndView.setViewName("login");
@@ -24,11 +32,24 @@ public class LoginController {
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST, name = "postLogin")
-    public ModelAndView postLogin() {
+    public String postLogin(@RequestParam(value = "login") String login,
+                                  @RequestParam(value = "password") String password,
+                                  HttpSession session) {
+        UserDTO userDTO = loginService.verifyLogin(login, password);
 
-        ModelAndView modelAndView = new ModelAndView();
+        if (userDTO == null) {
+            session.setAttribute("error", "Login incorrect");
+            return "redirect:login";
+        }
 
-        return modelAndView;
+        session.setAttribute("success", "Successfully logged in");
+        session.setAttribute("user", userDTO);
+
+        if (userDTO.getRole() == Role.ADMIN) {
+            return "redirect:admin";
+        }
+
+        return "redirect:chat";
     }
 
 }

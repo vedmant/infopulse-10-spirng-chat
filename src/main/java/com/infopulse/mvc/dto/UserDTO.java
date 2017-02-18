@@ -1,5 +1,7 @@
 package com.infopulse.mvc.dto;
 
+import com.infopulse.mvc.domain.Role;
+import com.infopulse.mvc.domain.UserRole;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,4 +24,6 @@ public class UserDTO {
 
     @NotNull
     private String password;
+
+    private Role role;
 }

@@ -6,6 +6,7 @@ import com.infopulse.mvc.domain.UserRole;
 import com.infopulse.mvc.dto.UserDTO;
 import com.infopulse.mvc.repository.UserRepository;
 import com.infopulse.mvc.repository.UserRoleRepository;
+import com.infopulse.mvc.service.util.UserConverterUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
@@ -30,22 +31,12 @@ public class RegistrationService {
             userRole.setRole(Role.USER);
             userRoleRepository.save(userRole);
 
-            User user = convertUserDTOtoUser(userDTO);
+            User user = UserConverterUtil.convertUserDTOtoUser(userDTO);
             user.setRole(userRole);
 
             userRepository.save(user);
         } catch (JpaSystemException e) {
             throw new UserServiceException("User login exists");
         }
-    }
-
-    private User convertUserDTOtoUser(UserDTO userDTO) {
-        User u = new User();
-
-        u.setName(userDTO.getName());
-        u.setLogin(userDTO.getLogin());
-        u.setPassword(userDTO.getPassword());
-
-        return u;
     }
 }

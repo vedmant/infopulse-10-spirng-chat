@@ -31,8 +31,7 @@ public class RegisterController {
     }
 
     @RequestMapping(value = "/register", method = RequestMethod.POST, name = "postRegister")
-    public ModelAndView postRegister(@ModelAttribute("user") @Validated UserDTO user,
-                                     HttpSession session) {
+    public ModelAndView postRegister(@ModelAttribute("user") @Validated UserDTO user) {
         ModelAndView modelAndView = new ModelAndView();
         registrationService.createUser(user);
 
