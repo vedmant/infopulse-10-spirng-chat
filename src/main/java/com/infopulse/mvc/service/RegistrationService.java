@@ -6,13 +6,10 @@ import com.infopulse.mvc.domain.UserRole;
 import com.infopulse.mvc.dto.UserDTO;
 import com.infopulse.mvc.repository.UserRepository;
 import com.infopulse.mvc.repository.UserRoleRepository;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.NestedServletException;
-
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Created by vedmant on 2/18/17.
@@ -26,7 +23,7 @@ public class RegistrationService {
     @Autowired
     private UserRoleRepository userRoleRepository;
 
-    @Transactional(rollbackOn = JpaSystemException.class, value = Transactional.TxType.REQUIRED)
+    @Transactional(rollbackFor = UserServiceException.class)
     public void createUser(UserDTO userDTO) {
         try {
             UserRole userRole = new UserRole();

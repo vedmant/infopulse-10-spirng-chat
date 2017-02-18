@@ -1,6 +1,5 @@
 package com.infopulse.mvc.controller;
 
-import com.infopulse.mvc.domain.User;
 import com.infopulse.mvc.dto.UserDTO;
 import com.infopulse.mvc.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +8,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
