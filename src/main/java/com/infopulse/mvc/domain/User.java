@@ -3,7 +3,9 @@ package com.infopulse.mvc.domain;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.enterprise.inject.Default;
 import javax.persistence.*;
+import javax.ws.rs.DefaultValue;
 import java.util.List;
 
 /**

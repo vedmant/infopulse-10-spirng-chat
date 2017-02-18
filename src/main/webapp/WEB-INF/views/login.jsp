@@ -14,7 +14,7 @@
 
             <sf:form modelAttribute="user" action="${formHandler}" cssClass="form-horizontal">
                 <div class="panel panel-primary">
-                    <div class="panel-heading">Registration</div>
+                    <div class="panel-heading">Login</div>
                     <div class="panel-body">
 
                         <div class="form-group">
