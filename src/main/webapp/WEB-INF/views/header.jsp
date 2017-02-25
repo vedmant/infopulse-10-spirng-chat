@@ -59,7 +59,7 @@
 </div>
 </c:if>
 
-<c:if test="${sessionScope.success != null}">
+<c:if test="${requestScope.success != null}">
 <div class="container">
     <p class="alert alert-success">${requestScope.success}</p>
 </div>
