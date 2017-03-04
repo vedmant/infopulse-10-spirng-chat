@@ -12,10 +12,10 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">Chat</div>
                 <div class="chat-container">
-                    <ul class="list-group" v-if="messages.length">
+                    <ul class="list-group" ng-if="messages.length">
                         <li ng-repeat="message in messages" class="list-group-item">
                             {{ message.sender }}:
-                            <strong v-if="message.receiver != undefined">{{ message.receiver }}</strong>
+                            <strong ng-if="message.receiver != undefined">{{ message.receiver }}</strong>
                             {{ message.message }}
                         </li>
                     </ul>
@@ -31,7 +31,7 @@
             <div class="panel panel-primary users-panel">
                 <div class="panel-heading">Users</div>
                 <div class="users-container">
-                    <ul class="list-group users-list" v-if="users.length">
+                    <ul class="list-group users-list" ng-if="users.length">
                         <li ng-repeat="user in users" class="list-group-item"><a href="" ng-click="selectUser(user)">{{ user }}</a></li>
                     </ul>
                     <div class="panel-body">
