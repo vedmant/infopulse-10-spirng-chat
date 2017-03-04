@@ -11,6 +11,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -33,8 +36,10 @@ public class LoginController {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST, name = "postLogin")
     public String postLogin(@RequestParam(value = "login") String login,
-                                  @RequestParam(value = "password") String password,
-                                  HttpSession session) {
+                            @RequestParam(value = "password") String password,
+                            HttpSession session,
+                            HttpServletRequest request,
+                            HttpServletResponse response) {
         UserDTO userDTO = loginService.verifyLogin(login, password);
 
         if (userDTO == null) {
@@ -48,6 +53,16 @@ public class LoginController {
         if (userDTO.getRole() == Role.ADMIN) {
             return "redirect:admin";
         }
+
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie: cookies) {
+            if (cookie.getName().equals("JSESSIONID")) {
+                cookie.setHttpOnly(false);
+                response.addCookie(cookie);
+            }
+        }
+
+        session.setAttribute("sockPath", "/sock");
 
         return "redirect:chat";
     }

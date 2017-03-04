@@ -1,6 +1,5 @@
 package com.infopulse.mvc.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.infopulse.mvc.domain.Message;
 import com.infopulse.mvc.domain.User;
 import com.infopulse.mvc.dto.UserDTO;
@@ -20,33 +19,30 @@ import java.util.List;
 public class ChatService {
 
     @Autowired
-    private MessageRepository messageRepository;
+    MessageRepository messageRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    UserRepository userRepository;
 
-    public UserDTO authorizeUser(String sessionId) {
+    public UserDTO authUser(String sessionId) {
+        System.out.println("Chat service");
         HttpSession httpSession = HttpSessionListenerImpl.getSessionById(sessionId);
+        System.out.println("Session: " + httpSession.toString());
         return (UserDTO) httpSession.getAttribute("user");
     }
 
-    public List<Message> getAllMessagesByUser(UserDTO user) {
-        List<Message> messages = messageRepository.getAllMessagesByRecieverLogin(user.getLogin());
-
-//        messageRepository.deleteAllMessagesByRecieverLogin(user.getLogin());
-
-        return messages;
+    public List<Message> getAllMessagesByUserLogin(String login) {
+        return messageRepository.getAllMessagesByReceiverLogin(login);
     }
 
-    public void saveMessage(String messageBody, String senderLogin, String receiverLogin) {
-        User sender = userRepository.findByLogin(senderLogin);
-        User receiver = userRepository.findByLogin(receiverLogin);
+    public void saveMessage(String message, String sender, String receiver) {
+        Message newMessage = new Message();
+        User senderUser = userRepository.findUserByLogin(sender);
+        User receiverUser = userRepository.findUserByLogin(receiver);
+        newMessage.setBody(message);
+        newMessage.setReceiver(receiverUser);
+        newMessage.setSender(senderUser);
 
-        Message message = new Message();
-        message.setBody(messageBody);
-        message.setSender(sender);
-        message.setReceiver(receiver);
-
-        messageRepository.save(message);
+        messageRepository.save(newMessage);
     }
 }

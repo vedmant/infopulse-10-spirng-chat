@@ -1,29 +1,36 @@
 package com.infopulse.mvc.controller;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
 import com.infopulse.mvc.domain.Message;
+import com.infopulse.mvc.domain.User;
 import com.infopulse.mvc.dto.UserDTO;
 import com.infopulse.mvc.service.ChatService;
 import com.infopulse.mvc.service.RedisService;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import redis.clients.jedis.Jedis;
+
 import java.io.IOException;
-import java.util.*;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by vedmant on 2/25/17.
  */
 public class ChatSocketController extends TextWebSocketHandler {
 
-    static Map<String,WebSocketSession> clientsOnline = new HashMap<>();
+    private static Map<String, WebSocketSession> clientsOnline = new HashMap<>();
 
     @Autowired
     private RedisService redisService;
@@ -32,119 +39,112 @@ public class ChatSocketController extends TextWebSocketHandler {
     private ChatService chatService;
 
     @Override
-    @Transactional
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String recievedMessage = message.getPayload();
+        Gson gson = new Gson();
+        Type jsontType = new TypeToken<HashMap<String, String>>() {}.getType();
+        Map<String, String> entry = gson.fromJson(message.getPayload(), jsontType);
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonParser jp = mapper.getFactory().createParser(recievedMessage);
-        JsonNode json = mapper.readTree(jp);
+        String key = entry.keySet().iterator().next();
+        String value = entry.values().iterator().next();
 
-        Iterator<Map.Entry<String,JsonNode>> rootFields = json.fields();
+        System.out.println("Key: ");
+        System.out.println(key);
+        System.out.println("Value: ");
+        System.out.println(value);
 
-        Map.Entry<String,JsonNode> firstField = rootFields.next();
-        if (firstField.getKey() == null) {
-            session.sendMessage(new TextMessage("bad_request"));
+        if (key == null) {
+            session.sendMessage(new TextMessage("Bad"));
             return;
         }
 
-        if (firstField.getKey().equals("sessionId")) {
-            String sessionId = firstField.getValue().asText();
-            UserDTO user = chatService.authorizeUser(sessionId);
-
-            if (user != null) {
-                clientsOnline.put(user.getLogin(), session);
-
-                List<Message> messages = chatService.getAllMessagesByUser(user);
-
-                messages.forEach(message1 -> {
-                    ObjectNode privateMessage = mapper.createObjectNode();
-                    JsonNode senderNode = mapper.createObjectNode().path(message1.getSender().getLogin());
-                    JsonNode messageNode = mapper.createObjectNode().path(message1.getBody());
-                    privateMessage.set("name", senderNode);
-                    privateMessage.set("message", messageNode);
-                    try {
-                        session.sendMessage(new TextMessage(privateMessage.asText()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-                List<ObjectNode> redisMessages = redisService.getAllMessages();
-                redisMessages.forEach(redisMessage -> {
-                    try {
-                        session.sendMessage(new TextMessage(redisMessage.asText()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-            } else {
-                session.sendMessage(new TextMessage("{\"auth\":\"error\"}"));
-            }
-
+        if (key.equals("sessionId")) {
+            System.out.println("Chat service call");
+            System.out.println("Chat service: " + (chatService == null ? "null" : "not null"));
+            UserDTO user = chatService.authUser(value);
+            authUser(session, user);
             return;
         }
 
-        if (firstField.getKey().equals("list")) {
-            List<String> userList = new ArrayList<>(clientsOnline.keySet());
-            ObjectNode listNode = mapper.createObjectNode();
-            ArrayNode usersNode = mapper.createArrayNode();
-            userList.forEach(usersNode::add);
-            listNode.set("list", usersNode);
-
-            session.sendMessage(new TextMessage(listNode.asText()));
-
+        if (! isAuthorized(session)) {
+            session.sendMessage(new TextMessage("Bad"));
             return;
         }
 
-        if (firstField.getKey().equals("broadcast")) {
-            String sender = clientsOnline.entrySet().stream()
-                    .filter(item -> item.getValue() == session)
-                    .findFirst()
-                    .get()
-                    .getKey();
-
-            ObjectNode broadcastMessage = mapper.createObjectNode();
-            JsonNode senderNode = mapper.createObjectNode().path(sender);
-            broadcastMessage.set("name", senderNode);
-            broadcastMessage.set("message", firstField.getValue());
-
-            Jedis jedis = redisService.getJedis();
-            jedis.lpush("broadcast", sender + ":" + firstField.getValue().asText());
-
-            clientsOnline.entrySet().stream()
-                    .forEach(clientSession -> {
-                        try {
-                            clientSession.getValue().sendMessage(new TextMessage(broadcastMessage.asText()));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-
-            return;
+        switch (key) {
+            case "list":
+                JsonObject list = new JsonObject();
+                list.add("list", gson.toJsonTree(clientsOnline.keySet()));
+                session.sendMessage(new TextMessage(list.toString()));
+                break;
+            case "broadcast":
+                sendMessage(session, false, value, null);
+                break;
+            default:
+                WebSocketSession socketSession = clientsOnline.get(key);
+                sendMessage(socketSession, true, value, key);
+                break;
         }
+    }
 
-        String userName = firstField.getKey();
+    private boolean isAuthorized(WebSocketSession session) {
+        return clientsOnline.values().contains(session);
+    }
 
+    private void sendMessage(WebSocketSession session, boolean isPrivate, String message, String receiver) throws IOException {
         String sender = clientsOnline.entrySet().stream()
                 .filter(item -> item.getValue() == session)
                 .findFirst()
-                .get()
+                .orElse(null)
                 .getKey();
 
-        WebSocketSession recieverSession = clientsOnline.get(userName);
-
-        if (recieverSession != null) {
-            ObjectNode privateMessage = mapper.createObjectNode();
-            JsonNode senderNode = mapper.createObjectNode().path(sender);
-            privateMessage.set("name", senderNode);
-            privateMessage.set("message", firstField.getValue());
-
-            recieverSession.sendMessage(new TextMessage(privateMessage.asText()));
+        if (isPrivate) {
+            if (session != null) {
+                JsonObject privateMessage = new JsonObject();
+                privateMessage.addProperty("name", sender);
+                privateMessage.addProperty("message", message);
+                clientsOnline.get(receiver).sendMessage(new TextMessage(privateMessage.toString()));
+            } else
+                chatService.saveMessage(message, sender, receiver);
         } else {
-            chatService.saveMessage(firstField.getValue().asText(), sender, firstField.getKey());
-        }
+            JsonObject broadcastMessage = new JsonObject();
+            broadcastMessage.addProperty("name", sender);
+            broadcastMessage.addProperty("message", message);
 
+//            Jedis jedis = redisService.getJedis();
+
+//            jedis.lpush("broadcast", broadcastMessage.getAsString());
+            for (WebSocketSession socketSession : clientsOnline.values()) {
+                socketSession.sendMessage(new TextMessage(broadcastMessage.toString()));
+            }
+        }
+    }
+
+    private void authUser(WebSocketSession session, UserDTO user) throws IOException {
+        Gson gson = new Gson();
+        if (user != null) {
+            session.sendMessage(new TextMessage("{'auth':'yes'}"));
+            clientsOnline.put(user.getLogin(), session);
+            List<Message> messages = chatService.getAllMessagesByUserLogin(user.getLogin());
+
+            messages.forEach(userMessage -> {
+                try {
+                    session.sendMessage(new TextMessage(gson.toJson(userMessage)));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+//            List<Message> broadcastMessages = redisService.getBroadcastMessages();
+//            broadcastMessages.forEach(broadcastMessage -> {
+//                try {
+//                    session.sendMessage(new TextMessage(gson.toJson(broadcastMessage, Message.class)));
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            });
+
+        } else {
+            session.sendMessage(new TextMessage("{'auth':'no'}"));
+        }
     }
 }

@@ -1,48 +1,48 @@
 package com.infopulse.mvc.service;
 
+import com.infopulse.mvc.domain.Message;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.Gson;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Created by vedmant on 2/25/17.
+ * @author Stepan
  */
 @Service
-// TODO implement
+//TODO implement
 public class RedisService {
-
     public Jedis getJedis() {
         return null;
     }
 
     public List<ObjectNode> getAllMessages() {
         List<String> messages = getJedis().lrange("broadcast", 0, -1);
-
         ObjectMapper mapper = new ObjectMapper();
+        List<ObjectNode> result = messages.stream().map(message -> {
+            String[] messageArray = message.split(":");
 
-        List<ObjectNode> result = messages.stream().map(new Function<String, ObjectNode>() {
-            @Override
-            public ObjectNode apply(String message) {
-                String[] messageParts = message.split(":");
-
-                JsonNode senderNode = mapper.createObjectNode().path(messageParts[0]);
-                JsonNode messageBodyNode = mapper.createObjectNode().path(messageParts[1]);
-
-                ObjectNode messageNode = mapper.createObjectNode();
-                messageNode.set("name", senderNode);
-                messageNode.set("message", messageBodyNode);
-
-                return messageNode;
-            }
+            ObjectNode broadCastMessage = mapper.createObjectNode();
+            JsonNode senderNode = mapper.createObjectNode().path(messageArray[0]);
+            JsonNode messageNode = mapper.createObjectNode().path(messageArray[1]);
+            broadCastMessage.set("name", senderNode);
+            broadCastMessage.set("message", messageNode);
+            return broadCastMessage;
         }).collect(Collectors.toList());
 
         return result;
     }
+
+    public List<Message> getBroadcastMessages(){
+        List<String> messages = getJedis().lrange("broadcast", 0, -1);
+        Gson gson = new Gson();
+        return  messages.stream().map(message -> gson.fromJson(message, Message.class)).collect(Collectors.toList());
+    }
+
 }

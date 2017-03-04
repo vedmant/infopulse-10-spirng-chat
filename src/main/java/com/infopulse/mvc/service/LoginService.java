@@ -18,7 +18,7 @@ public class LoginService {
 
     public UserDTO verifyLogin(String login, String password) {
 
-        User user = userRepository.findByLogin(login);
+        User user = userRepository.findUserByLogin(login);
 
         if (user == null) {
             return null;
