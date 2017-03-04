@@ -40,6 +40,7 @@ public class ChatSocketController extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        System.out.println("handleTextMessage");
         Gson gson = new Gson();
         Type jsontType = new TypeToken<HashMap<String, String>>() {}.getType();
         Map<String, String> entry = gson.fromJson(message.getPayload(), jsontType);
@@ -47,10 +48,8 @@ public class ChatSocketController extends TextWebSocketHandler {
         String key = entry.keySet().iterator().next();
         String value = entry.values().iterator().next();
 
-        System.out.println("Key: ");
-        System.out.println(key);
-        System.out.println("Value: ");
-        System.out.println(value);
+        System.out.println("Key: " + key);
+        System.out.println("Value: " + value);
 
         if (key == null) {
             session.sendMessage(new TextMessage("Bad"));
@@ -58,13 +57,12 @@ public class ChatSocketController extends TextWebSocketHandler {
         }
 
         if (key.equals("sessionId")) {
-            System.out.println("Chat service call");
-            System.out.println("Chat service: " + (chatService == null ? "null" : "not null"));
             UserDTO user = chatService.authUser(value);
             authUser(session, user);
             return;
         }
 
+        System.out.println("Authorize");
         if (! isAuthorized(session)) {
             session.sendMessage(new TextMessage("Bad"));
             return;
@@ -80,8 +78,7 @@ public class ChatSocketController extends TextWebSocketHandler {
                 sendMessage(session, false, value, null);
                 break;
             default:
-                WebSocketSession socketSession = clientsOnline.get(key);
-                sendMessage(socketSession, true, value, key);
+                sendMessage(session, true, value, key);
                 break;
         }
     }
@@ -97,23 +94,32 @@ public class ChatSocketController extends TextWebSocketHandler {
                 .orElse(null)
                 .getKey();
 
+        System.out.println("Send message");
+        System.out.println("Sender: " + sender);
+        System.out.println("Receiver: " + receiver);
+
         if (isPrivate) {
             if (session != null) {
                 JsonObject privateMessage = new JsonObject();
-                privateMessage.addProperty("name", sender);
+                privateMessage.addProperty("sender", sender);
+                privateMessage.addProperty("receiver", receiver);
                 privateMessage.addProperty("message", message);
                 clientsOnline.get(receiver).sendMessage(new TextMessage(privateMessage.toString()));
+                session.sendMessage(new TextMessage(privateMessage.toString()));
             } else
                 chatService.saveMessage(message, sender, receiver);
         } else {
             JsonObject broadcastMessage = new JsonObject();
-            broadcastMessage.addProperty("name", sender);
+            broadcastMessage.addProperty("sender", sender);
             broadcastMessage.addProperty("message", message);
 
 //            Jedis jedis = redisService.getJedis();
 
 //            jedis.lpush("broadcast", broadcastMessage.getAsString());
             for (WebSocketSession socketSession : clientsOnline.values()) {
+                System.out.println("Broadcast message");
+                System.out.println(socketSession.toString());
+                System.out.println(broadcastMessage.toString());
                 socketSession.sendMessage(new TextMessage(broadcastMessage.toString()));
             }
         }

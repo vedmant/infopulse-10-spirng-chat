@@ -1,2 +1,7 @@
 
-.chat-body{ max-height: 400px; overflow: auto; }
+.chat-container{ height: 300px; overflow: auto; }
+.users-container{ height: 300px; overflow: auto; }
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+    display: none !important;
+}

@@ -2,7 +2,7 @@
 <%@ taglib uri="http://www.springframework.org/tags" prefix="s" %>
 <%@include file="header.jsp" %>
 
-<div class="container" ng-app="webChat" ng-controller="webChatController" id="web_chat">
+<div class="container" ng-app="webChat" ng-controller="WebChatController" ng-cloak>
 
     <h2>Chat</h2>
 
@@ -11,11 +11,17 @@
 
             <div class="panel panel-primary">
                 <div class="panel-heading">Chat</div>
-                <div class="panel-body chat-body">
-                    <ul>
-                        <li ng-repeat="message in messages">{{ message.name }}: {{ message.message }}</li>
+                <div class="chat-container">
+                    <ul class="list-group" v-if="messages.length">
+                        <li ng-repeat="message in messages" class="list-group-item">
+                            {{ message.sender }}:
+                            <strong v-if="message.receiver != undefined">{{ message.receiver }}</strong>
+                            {{ message.message }}
+                        </li>
                     </ul>
-                    <div ng-if="! messages.length">No messages</div>
+                    <div class="panel-body">
+                        <div ng-if="! messages.length">No messages</div>
+                    </div>
                 </div>
             </div>
 
@@ -24,11 +30,13 @@
 
             <div class="panel panel-primary users-panel">
                 <div class="panel-heading">Users</div>
-                <div class="panel-body">
-                    <ul>
-                        <li ng-repeat="user in users" ng-click="selectUser(user)">{{ user }}</li>
+                <div class="users-container">
+                    <ul class="list-group users-list" v-if="users.length">
+                        <li ng-repeat="user in users" class="list-group-item"><a href="" ng-click="selectUser(user)">{{ user }}</a></li>
                     </ul>
-                    <div ng-if="! users.length">No users</div>
+                    <div class="panel-body">
+                        <div ng-if="! users.length">No users</div>
+                    </div>
                 </div>
             </div>
 

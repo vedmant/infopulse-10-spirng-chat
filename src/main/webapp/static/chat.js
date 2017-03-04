@@ -20,7 +20,7 @@ socket.onclose = function (e) {
     if (e.wasClean) {
         console.log('Closed clean')
     } else {
-        console.error('Closed with error')
+        console.error('Closed with error', e)
     }
 };
 
@@ -48,34 +48,25 @@ function getCookie(name) {
  */
 var app = angular.module('webChat', []);
 
-app.controller('webChatController', function ($scope) {
+app.controller('WebChatController', function ($scope) {
 
     $scope.users = [];
-    $scope.messsages = [];
+    $scope.messages = [];
     $scope.message = '';
-
-    // document.body.addEventListener('users-list', function (e) {
-    //     console.log('users list', e)
-    //     $scope.users = e.detail;
-    // }, false);
-    //
-    // document.body.addEventListener('new-message', function (e) {
-    //     $scope.messages.push(e.detail);
-    // }, false);
-
-    // $scope.applyUsers = function (users) {
-    //     $scope.users = users;
-    // };
 
     $scope.selectUser = function (user) {
         $scope.message = user + ': ';
     };
 
     $scope.sendMessage = function () {
-        console.log('sendMessage');
-        var arrayMesssage = $scope.message.split(':');
-        var message = {};
-        message[arrayMesssage[0]] = arrayMesssage[1];
+        if ($scope.message.includes(':')) {
+            var arrayMessage = $scope.message.split(':');
+            var message = {};
+            message[arrayMessage[0]] = arrayMessage[1];
+        } else {
+            var message = {broadcast: $scope.message};
+        }
+
         socket.send(JSON.stringify(message));
         $scope.message = '';
     };
@@ -106,7 +97,7 @@ app.controller('webChatController', function ($scope) {
             return;
         }
 
-        if (typeof message.name !== 'undefined') {
+        if (typeof message.sender !== 'undefined') {
             $scope.messages.push(message);
         }
     };
